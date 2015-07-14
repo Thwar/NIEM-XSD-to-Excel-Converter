@@ -54,8 +54,12 @@ namespace NIEMXML
                 if (el.Attribute("name").Value == elementName)
                 {
                     //Check if Documentation exists for Class
-                    if (el.Elements(xs + "annotation").Elements(xs + "documentation").Count() != 0)
+                    if (el.Elements(xs + "annotation").Elements(xs + "documentation").Count() == 1)
                         return el.Elements(xs + "annotation").Elements(xs + "documentation").Single().Value;
+
+                    //Check if more than one Documentation entry exists and throw error
+                    if (el.Elements(xs + "annotation").Elements(xs + "documentation").Count() > 1)
+                        throw new documentationEntryException(elementName);
                 }
             }
             return "";
@@ -69,6 +73,11 @@ namespace NIEMXML
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
 
+        }
+
+        public class documentationEntryException : Exception
+        {
+            public documentationEntryException(string message)  : base(message) { }
         }
 
         private void selectXSD_Click(object sender, EventArgs e)
@@ -97,7 +106,7 @@ namespace NIEMXML
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("This tool is used to convert NIEM XSD schemas into Excel Spreadsheets. \nAuthor: Ruben T. Rosales\n\nVersion v1.0", "About NIEM XSD to Excel Converter ", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+            MessageBox.Show("This tool is used to convert NIEM XSD schemas into Excel Spreadsheets. \n\nAuthor: Ruben T. Rosales\nVersion v1.0", "About NIEM XSD to Excel Converter ", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
         }
 
         private void createExcel_Click(object sender, EventArgs e)
@@ -192,6 +201,12 @@ namespace NIEMXML
                     row++;
                 }
             }
+
+            catch (documentationEntryException ex)
+            {
+
+                errorMsg = "Remove double documentation entry. You have two or more entries for documentation. At element: " + ex.Message;
+            }
             catch (System.Runtime.InteropServices.COMException ex)
             {
                 errorMsg = "You probably clicked on Excel or Closed it. Therefore the operation will now terminate.\nPlease restart the conversion.";
@@ -214,7 +229,7 @@ namespace NIEMXML
 
             if (errorMsg != "")
             {
-                MessageBox.Show(errorMsg, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(errorMsg, "Fatal Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 label2.Text = "An Error Ocurred. Please try again.";
             }
             else
