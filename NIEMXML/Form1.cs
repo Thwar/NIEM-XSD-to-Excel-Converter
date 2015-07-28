@@ -47,22 +47,34 @@ namespace NIEMXML
 
 
         //Get Element Documentation
-        public static string searchForElementDocumentation(string elementName, XDocument doc, XNamespace xs)
+        public static Tuple<string, string> searchForElementDocumentation(string elementName, XDocument doc, XNamespace xs)
         {
+            string description = "";
+            string source = "";
+
             foreach (var el in doc.Root.Elements(xs + "element"))
             {
                 if (el.Attribute("name").Value == elementName)
                 {
                     //Check if Documentation exists for Class
-                    if (el.Elements(xs + "annotation").Elements(xs + "documentation").Count() == 1)
-                        return el.Elements(xs + "annotation").Elements(xs + "documentation").Single().Value;
+
+                    var documentation = el.Elements(xs + "annotation").Elements(xs + "documentation").ToList();
 
                     //Check if more than one Documentation entry exists and throw error
-                    if (el.Elements(xs + "annotation").Elements(xs + "documentation").Count() > 1)
+                    if (documentation.Count() > 2)
                         throw new documentationEntryException(elementName);
+
+                    //Get Documentation
+                    if (documentation.Count() == 1)
+                        description =  documentation[0].Value;
+
+                    //Get Source
+                    if (documentation.Count() == 2)
+                        source =  documentation[1].Value;
+
                 }
             }
-            return "";
+            return new Tuple<string, string>(description, source);
         }
 
         private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
@@ -142,6 +154,7 @@ namespace NIEMXML
             excell_app.createHeaders(1, 2, "Element Name", "B1", "B1", 0, "GRAY", true, 10, "");
             excell_app.createHeaders(1, 3, "Element Type", "C1", "C1", 0, "GRAY", true, 10, "");
             excell_app.createHeaders(1, 4, "Documentation ", "D1", "D1", 0, "GRAY", true, 10, "");
+            excell_app.createHeaders(1, 5, "Source ", "E1", "E1", 0, "GRAY", true, 10, "");
 
             //Row Start
             int row = 3;
@@ -189,11 +202,10 @@ namespace NIEMXML
                         string elementType = searchForElementTypes(elementName, doc, xs);
                         excell_app.addData(row, 3, elementType, "C" + row, "C" + row, "");
 
-                        //Element Documentation
-                        documentation = searchForElementDocumentation(elementName, doc, xs);
-                        excell_app.addData(row, 4, documentation, "D" + row, "D" + row, "");
-
-                                       
+                        //Element Documentation/Source
+                        var tuple = searchForElementDocumentation(elementName, doc, xs);
+                        excell_app.addData(row, 4,  tuple.Item1, "D" + row, "D" + row, "");
+                        excell_app.addData(row, 5, tuple.Item2, "E" + row, "E" + row, "");                                   
                         
                         row++;
                     }
@@ -204,8 +216,7 @@ namespace NIEMXML
 
             catch (documentationEntryException ex)
             {
-
-                errorMsg = "Remove double documentation entry. You have two or more entries for documentation. At element: " + ex.Message;
+                errorMsg = "Remove multiple documentation entry. You have three or more entries for documentation. At element: " + ex.Message;
             }
             catch (System.Runtime.InteropServices.COMException ex)
             {
