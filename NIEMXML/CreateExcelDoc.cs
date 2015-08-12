@@ -7,7 +7,7 @@ using Microsoft.Office.Interop.Excel;
 
 namespace NIEMXML
 {
-    class CreateExcelDoc
+    public class CreateExcelDoc
     {
         public Application app { get; set; }
         private Workbook workbook = null;

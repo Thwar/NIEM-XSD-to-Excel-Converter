@@ -15,8 +15,7 @@ namespace NIEMXML
     public partial class Form1 : Form
     {
         public Form1()
-        {
-         
+        {     
             InitializeComponent();
         }
 
@@ -57,7 +56,6 @@ namespace NIEMXML
                 if (el.Attribute("name").Value == elementName)
                 {
                     //Check if Documentation exists for Class
-
                     var documentation = el.Elements(xs + "annotation").Elements(xs + "documentation").ToList();
 
                     //Check if more than one Documentation entry exists and throw error
@@ -70,7 +68,10 @@ namespace NIEMXML
 
                     //Get Source
                     if (documentation.Count() == 2)
-                        source =  documentation[1].Value;
+                    {
+                        description = documentation[1].Value;
+                        source = documentation[0].Value;
+                    }
 
                 }
             }
@@ -132,16 +133,12 @@ namespace NIEMXML
             label2.Text = "Do not close or click on Excel. \nDoing so will terminate the operation.";
 
             backgroundWorker1.RunWorkerAsync();
-
-
-
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
             try
             {
-
             jobCanceled = false;
             errorMsg = "";
             CreateExcelDoc excell_app = new CreateExcelDoc();
@@ -160,14 +157,10 @@ namespace NIEMXML
             int row = 3;
             string documentation = "";
 
-
+                //complexType Process
                 foreach (var el in doc.Descendants(xs + "complexType"))
                 {
-                    if ((backgroundWorker1.CancellationPending == true))
-                    {
-                        e.Cancel = true;
-                        break;
-                    }
+                    if (cancelJob(e)) break; 
                   
                     //Write Class Name
                     if ((el.Elements(xs + "complexContent")).Count() != 0)
@@ -187,28 +180,45 @@ namespace NIEMXML
 
                     foreach (var attr in el.Elements(xs + "complexContent").Elements(xs + "extension").Elements(xs + "sequence").Elements(xs + "element"))
                     {
-                        if ((backgroundWorker1.CancellationPending == true))
-                        {
-                            e.Cancel = true;
-                            break;
-                        }
+                        if (cancelJob(e)) break; 
 
-                        //Element Name
-                        elementName = attr.Attribute("ref") != null ? attr.Attribute("ref").Value : "";
-                        excell_app.addData(row, 2, elementName, "B" + row, "B" + row, "");
-
-                        //Element Type
-                        elementName = elementName.Substring(elementName.IndexOf(":") + 1);                      
-                        string elementType = searchForElementTypes(elementName, doc, xs);
-                        excell_app.addData(row, 3, elementType, "C" + row, "C" + row, "");
-
-                        //Element Documentation/Source
-                        var tuple = searchForElementDocumentation(elementName, doc, xs);
-                        excell_app.addData(row, 4,  tuple.Item1, "D" + row, "D" + row, "");
-                        excell_app.addData(row, 5, tuple.Item2, "E" + row, "E" + row, "");                                   
-                        
+                        writeElement(attr, row, excell_app);                                         
                         row++;
                     }
+                    excell_app.createHeaders(row, 2, "", "A" + row, "D" + row, 2, "GAINSBORO", true, 10, "");
+                    row++;
+                }
+
+                //simpleType Process
+                foreach (var el in doc.Descendants(xs + "simpleType"))
+                {
+                    if (cancelJob(e)) break; 
+
+                    //Write simpleType name
+                    excell_app.addData(row, 1, el.Attribute("name").Value + " (Enumerable)", "A" + row, "A" + row, "");
+
+                    //Check if Documentation exists for simpleType
+                    if (el.Elements(xs + "annotation").Elements(xs + "documentation").Count() != 0)
+                    {
+                        documentation = el.Elements(xs + "annotation").Elements(xs + "documentation").Single().Value;
+                        //Write Documentation for simpleType
+                        excell_app.addData(row, 4, documentation, "D" + row, "D" + row, "");
+                    }
+                    row++;
+
+                    foreach (var attr in el.Elements(xs + "restriction").Elements(xs + "enumeration"))
+                     {
+                          var edocu = "";
+                          if (attr.Elements(xs + "annotation").Elements(xs + "documentation").Count() != 0)
+                              edocu = attr.Elements(xs + "annotation").Elements(xs + "documentation").Single().Value;
+
+                        var ename = attr.Attribute("value").Value;
+
+                        excell_app.addData(row, 2, ename, "B" + row, "B" + row, "");
+                        excell_app.addData(row, 3, "enumeration", "C" + row, "C" + row, "");
+                        excell_app.addData(row, 4, edocu, "D" + row, "D" + row, "");
+                        row++;
+                     }
                     excell_app.createHeaders(row, 2, "", "A" + row, "D" + row, 2, "GAINSBORO", true, 10, "");
                     row++;
                 }
@@ -227,6 +237,33 @@ namespace NIEMXML
                errorMsg = ex.ToString();
             }
           
+        }
+
+        public bool cancelJob(DoWorkEventArgs e)
+        {
+            if ((backgroundWorker1.CancellationPending == true))
+            {
+                e.Cancel = true;
+                return true;
+            }
+                return false;
+        }
+
+        public void writeElement(XElement attr, int row, CreateExcelDoc excell_app)
+        {
+            //Element Name
+            elementName = attr.Attribute("ref") != null ? attr.Attribute("ref").Value : "";
+            excell_app.addData(row, 2, elementName, "B" + row, "B" + row, "");
+
+            //Element Type
+            elementName = elementName.Substring(elementName.IndexOf(":") + 1);
+            string elementType = searchForElementTypes(elementName, doc, xs);
+            excell_app.addData(row, 3, elementType, "C" + row, "C" + row, "");
+
+            //Element Documentation/Source
+            var tuple = searchForElementDocumentation(elementName, doc, xs);
+            excell_app.addData(row, 4, tuple.Item1, "D" + row, "D" + row, "");
+            excell_app.addData(row, 5, tuple.Item2, "E" + row, "E" + row, "");    
         }
 
         private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
