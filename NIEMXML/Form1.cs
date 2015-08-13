@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Deployment.Application;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -17,6 +19,7 @@ namespace NIEMXML
         public Form1()
         {     
             InitializeComponent();
+            this.Text = "NIEM XSD to Excel Converter " + GetRunningVersion();
         }
 
         string elementName = "";
@@ -26,18 +29,34 @@ namespace NIEMXML
         bool jobCanceled = false;
         string errorMsg;
 
+        private string GetRunningVersion()
+        {
+            if (System.Deployment.Application.ApplicationDeployment.IsNetworkDeployed)
+            {
+
+                System.Deployment.Application.ApplicationDeployment ad = System.Deployment.Application.ApplicationDeployment.CurrentDeployment;
+
+                return "Version: " + ad.CurrentVersion.ToString();
+
+            }
+
+            return "v1.0";    
+
+        }
+
         private void button1_Click(object sender, EventArgs e)
         {
 
         }
 
         //Get Element Types
-        public static string searchForElementTypes(string elementName, XDocument doc, XNamespace xs)
+        public static string searchForElementTypes(string elementName, XDocument doc, XNamespace xs, BackgroundWorker backgroundWorker1, int percentage)
         {
             foreach (var el in doc.Root.Elements(xs + "element"))
             {
                 if (el.Attribute("name").Value == elementName)
                 {
+                    backgroundWorker1.ReportProgress(percentage);
                     return el.Attribute("type") != null ? el.Attribute("type").Value : "";
                 }
             }
@@ -69,8 +88,8 @@ namespace NIEMXML
                     //Get Source
                     if (documentation.Count() == 2)
                     {
-                        description = documentation[1].Value;
-                        source = documentation[0].Value;
+                        source = documentation[1].Value.StartsWith("Source:") ? documentation[1].Value : documentation[0].Value;
+                        description = documentation[1].Value.StartsWith("Source:") ? documentation[0].Value : documentation[1].Value;
                     }
 
                 }
@@ -119,14 +138,17 @@ namespace NIEMXML
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("This tool is used to convert NIEM XSD schemas into Excel Spreadsheets. \n\nAuthor: Ruben T. Rosales\nVersion v1.0", "About NIEM XSD to Excel Converter ", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+            MessageBox.Show("This tool is used to convert NIEM XSD schemas into Excel Spreadsheets. \n\nAuthor: Ruben T. Rosales\nVersion " + GetRunningVersion(), "About NIEM XSD to Excel Converter ", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
         }
 
         private void createExcel_Click(object sender, EventArgs e)
         {
             progressBar1.Value = 0;
-            progressBar1.Style = ProgressBarStyle.Marquee;
-            progressBar1.MarqueeAnimationSpeed = 30;
+            progressBar1.Maximum = 100;
+           // progressBar1.Style = ProgressBarStyle.Marquee;
+           // progressBar1.MarqueeAnimationSpeed = 30;
+            progressBar1.Step = 1;
+
             createExcel.Enabled = false;
             selectXSD.Enabled = false;
             label1.Text = "Creating Excel Spreadsheet. Please wait...";
@@ -157,9 +179,18 @@ namespace NIEMXML
             int row = 3;
             string documentation = "";
 
+            int complex = doc.Descendants(xs + "complexType").Count();
+            int simple = doc.Descendants(xs + "simpleType").Count();
+            int elements = doc.Root.Elements(xs + "element").Count();
+
+            var percentage = 100/(complex + simple + elements);
+
+
+
                 //complexType Process
                 foreach (var el in doc.Descendants(xs + "complexType"))
                 {
+                    backgroundWorker1.ReportProgress(percentage);
                     if (cancelJob(e)) break; 
                   
                     //Write Class Name
@@ -180,9 +211,9 @@ namespace NIEMXML
 
                     foreach (var attr in el.Elements(xs + "complexContent").Elements(xs + "extension").Elements(xs + "sequence").Elements(xs + "element"))
                     {
-                        if (cancelJob(e)) break; 
+                        if (cancelJob(e)) break;
 
-                        writeElement(attr, row, excell_app);                                         
+                        writeElement(attr, row, excell_app, backgroundWorker1, percentage);                                         
                         row++;
                     }
                     excell_app.createHeaders(row, 2, "", "A" + row, "D" + row, 2, "GAINSBORO", true, 10, "");
@@ -192,6 +223,7 @@ namespace NIEMXML
                 //simpleType Process
                 foreach (var el in doc.Descendants(xs + "simpleType"))
                 {
+                    backgroundWorker1.ReportProgress(percentage);
                     if (cancelJob(e)) break; 
 
                     //Write simpleType name
@@ -249,7 +281,7 @@ namespace NIEMXML
                 return false;
         }
 
-        public void writeElement(XElement attr, int row, CreateExcelDoc excell_app)
+        public void writeElement(XElement attr, int row, CreateExcelDoc excell_app, BackgroundWorker backgroundWorker1, int percentage)
         {
             //Element Name
             elementName = attr.Attribute("ref") != null ? attr.Attribute("ref").Value : "";
@@ -257,13 +289,20 @@ namespace NIEMXML
 
             //Element Type
             elementName = elementName.Substring(elementName.IndexOf(":") + 1);
-            string elementType = searchForElementTypes(elementName, doc, xs);
+            string elementType = searchForElementTypes(elementName, doc, xs, backgroundWorker1, percentage);
             excell_app.addData(row, 3, elementType, "C" + row, "C" + row, "");
 
             //Element Documentation/Source
             var tuple = searchForElementDocumentation(elementName, doc, xs);
             excell_app.addData(row, 4, tuple.Item1, "D" + row, "D" + row, "");
             excell_app.addData(row, 5, tuple.Item2, "E" + row, "E" + row, "");    
+        }
+
+        private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            // The progress percentage is a property of e
+            progressBar1.Value += e.ProgressPercentage;
+            label3.Text =  progressBar1.Value + "%";
         }
 
         private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -277,19 +316,19 @@ namespace NIEMXML
 
             if (errorMsg != "")
             {
-                MessageBox.Show(errorMsg, "Fatal Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(new Form() { TopMost = true }, errorMsg, "Fatal Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 label2.Text = "An Error Ocurred. Please try again.";
             }
             else
             {
                 if (!jobCanceled)
                 {
-                    MessageBox.Show("Done!", "Operation Succesfull", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                    MessageBox.Show(new Form() { TopMost = true },  "Done!", "Operation Succesfull", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
                     label1.Text = "Done!";
                 }
                 else
                 {
-                    MessageBox.Show("Operation was Canceled!", "Operation Canceled", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                    MessageBox.Show(new Form() { TopMost = true }, "Operation was Canceled!", "Operation Canceled", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
                     label1.Text = "Canceled!";
                 }
             }

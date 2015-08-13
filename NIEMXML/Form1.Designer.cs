@@ -39,6 +39,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
             this.label2 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -50,7 +51,7 @@
             // textBox1
             // 
             this.textBox1.Cursor = System.Windows.Forms.Cursors.Default;
-            this.textBox1.Location = new System.Drawing.Point(26, 37);
+            this.textBox1.Location = new System.Drawing.Point(35, 37);
             this.textBox1.Name = "textBox1";
             this.textBox1.ReadOnly = true;
             this.textBox1.Size = new System.Drawing.Size(230, 20);
@@ -58,7 +59,7 @@
             // 
             // selectXSD
             // 
-            this.selectXSD.Location = new System.Drawing.Point(26, 63);
+            this.selectXSD.Location = new System.Drawing.Point(36, 63);
             this.selectXSD.Name = "selectXSD";
             this.selectXSD.Size = new System.Drawing.Size(230, 26);
             this.selectXSD.TabIndex = 2;
@@ -74,7 +75,7 @@
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.menuStrip1.Size = new System.Drawing.Size(284, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(304, 24);
             this.menuStrip1.TabIndex = 3;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -89,7 +90,7 @@
             // createExcel
             // 
             this.createExcel.Enabled = false;
-            this.createExcel.Location = new System.Drawing.Point(26, 117);
+            this.createExcel.Location = new System.Drawing.Point(35, 117);
             this.createExcel.Name = "createExcel";
             this.createExcel.Size = new System.Drawing.Size(169, 40);
             this.createExcel.TabIndex = 4;
@@ -99,22 +100,25 @@
             // 
             // backgroundWorker1
             // 
+            this.backgroundWorker1.WorkerReportsProgress = true;
+            this.backgroundWorker1.WorkerSupportsCancellation = true;
             this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
+            this.backgroundWorker1.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.backgroundWorker1_ProgressChanged);
             this.backgroundWorker1.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.backgroundWorker1_RunWorkerCompleted);
             // 
             // progressBar1
             // 
             this.progressBar1.Location = new System.Drawing.Point(26, 168);
-            this.progressBar1.MarqueeAnimationSpeed = 0;
+            this.progressBar1.MarqueeAnimationSpeed = 50;
             this.progressBar1.Name = "progressBar1";
             this.progressBar1.Size = new System.Drawing.Size(230, 23);
-            this.progressBar1.Style = System.Windows.Forms.ProgressBarStyle.Marquee;
+            this.progressBar1.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
             this.progressBar1.TabIndex = 5;
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(15, 201);
+            this.label1.Location = new System.Drawing.Point(33, 196);
             this.label1.MaximumSize = new System.Drawing.Size(100, 0);
             this.label1.MinimumSize = new System.Drawing.Size(250, 0);
             this.label1.Name = "label1";
@@ -125,7 +129,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(201, 117);
+            this.button1.Location = new System.Drawing.Point(211, 117);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(54, 39);
             this.button1.TabIndex = 7;
@@ -138,18 +142,28 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.Red;
-            this.label2.Location = new System.Drawing.Point(16, 218);
+            this.label2.Location = new System.Drawing.Point(31, 218);
             this.label2.MinimumSize = new System.Drawing.Size(250, 0);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(250, 13);
             this.label2.TabIndex = 8;
             this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(262, 174);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(21, 13);
+            this.label3.TabIndex = 9;
+            this.label3.Text = "0%";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(284, 251);
+            this.ClientSize = new System.Drawing.Size(304, 258);
+            this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.label1);
@@ -183,6 +197,7 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label label3;
     }
 }
 
