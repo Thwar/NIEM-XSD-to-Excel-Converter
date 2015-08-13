@@ -33,30 +33,25 @@ namespace NIEMXML
         {
             if (System.Deployment.Application.ApplicationDeployment.IsNetworkDeployed)
             {
-
                 System.Deployment.Application.ApplicationDeployment ad = System.Deployment.Application.ApplicationDeployment.CurrentDeployment;
-
                 return "Version: " + ad.CurrentVersion.ToString();
-
             }
 
             return "v1.0";    
-
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-
         }
 
         //Get Element Types
-        public static string searchForElementTypes(string elementName, XDocument doc, XNamespace xs, BackgroundWorker backgroundWorker1, int percentage)
+        public static string searchForElementTypes(string elementName, XDocument doc, XNamespace xs, BackgroundWorker backgroundWorker1, int total)
         {
             foreach (var el in doc.Root.Elements(xs + "element"))
             {
                 if (el.Attribute("name").Value == elementName)
                 {
-                    backgroundWorker1.ReportProgress(percentage);
+                    backgroundWorker1.ReportProgress(total, total);
                     return el.Attribute("type") != null ? el.Attribute("type").Value : "";
                 }
             }
@@ -144,7 +139,6 @@ namespace NIEMXML
         private void createExcel_Click(object sender, EventArgs e)
         {
             progressBar1.Value = 0;
-            progressBar1.Maximum = 100;
            // progressBar1.Style = ProgressBarStyle.Marquee;
            // progressBar1.MarqueeAnimationSpeed = 30;
             progressBar1.Step = 1;
@@ -183,15 +177,15 @@ namespace NIEMXML
             int complex = doc.Descendants(xs + "complexType").Count();
             int simple = doc.Descendants(xs + "simpleType").Count();
             int elements = doc.Root.Elements(xs + "element").Count();
-
-            var percentage = 100/(complex + simple + elements);
+            int total = complex + simple + elements;
+            decimal percentage = 100 / total;
 
 
 
                 //complexType Process
                 foreach (var el in doc.Descendants(xs + "complexType"))
                 {
-                    backgroundWorker1.ReportProgress(percentage);
+                    backgroundWorker1.ReportProgress(total, total);
                     if (cancelJob(e)) break; 
                   
                     //Write Class Name
@@ -214,7 +208,7 @@ namespace NIEMXML
                     {
                         if (cancelJob(e)) break;
 
-                        writeElement(attr, row, excell_app, backgroundWorker1, percentage);                                         
+                        writeElement(attr, row, excell_app, backgroundWorker1, total);                                         
                         row++;
                     }
                     excell_app.createHeaders(row, 2, "", "A" + row, "D" + row, 2, "GAINSBORO", true, 10, "");
@@ -224,7 +218,7 @@ namespace NIEMXML
                 //simpleType Process
                 foreach (var el in doc.Descendants(xs + "simpleType"))
                 {
-                    backgroundWorker1.ReportProgress(percentage);
+                    backgroundWorker1.ReportProgress(total, total);
                     if (cancelJob(e)) break; 
 
                     //Write simpleType name
@@ -282,7 +276,7 @@ namespace NIEMXML
                 return false;
         }
 
-        public void writeElement(XElement attr, int row, CreateExcelDoc excell_app, BackgroundWorker backgroundWorker1, int percentage)
+        public void writeElement(XElement attr, int row, CreateExcelDoc excell_app, BackgroundWorker backgroundWorker1, int total)
         {
             //Element Name
             elementName = attr.Attribute("ref") != null ? attr.Attribute("ref").Value : "";
@@ -290,7 +284,7 @@ namespace NIEMXML
 
             //Element Type
             elementName = elementName.Substring(elementName.IndexOf(":") + 1);
-            string elementType = searchForElementTypes(elementName, doc, xs, backgroundWorker1, percentage);
+            string elementType = searchForElementTypes(elementName, doc, xs, backgroundWorker1, total);
             excell_app.addData(row, 3, elementType, "C" + row, "C" + row, "");
 
             //Element Documentation/Source
@@ -302,13 +296,16 @@ namespace NIEMXML
         private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             // The progress percentage is a property of e
-            progressBar1.Value += e.ProgressPercentage;
-            label3.Text =  progressBar1.Value + "%";
+            progressBar1.Maximum = Convert.ToInt32(e.UserState);
+
+            progressBar1.Increment(1);
+
+
+            label3.Text = (progressBar1.Value * 100) / progressBar1.Maximum + "%";
         }
 
         private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            progressBar1.Value = 100;
             label3.Text = "100%";
             createExcel.Enabled = true;
             selectXSD.Enabled = true;
