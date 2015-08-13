@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ClosedXML.Excel;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -17,7 +18,7 @@ namespace NIEMXML
     public partial class Form1 : Form
     {
         public Form1()
-        {     
+        {
             InitializeComponent();
             this.Text = "NIEM XSD to Excel Converter " + GetRunningVersion();
         }
@@ -26,18 +27,19 @@ namespace NIEMXML
         string extensionClass = "";
         XNamespace xs = XNamespace.Get("http://www.w3.org/2001/XMLSchema");
         XDocument doc;
+        XLWorkbook wb = new XLWorkbook();
         bool jobCanceled = false;
         string errorMsg;
 
         private string GetRunningVersion()
         {
-            if (System.Deployment.Application.ApplicationDeployment.IsNetworkDeployed)
-            {
-                System.Deployment.Application.ApplicationDeployment ad = System.Deployment.Application.ApplicationDeployment.CurrentDeployment;
-                return "Version: " + ad.CurrentVersion.ToString();
-            }
+            //if (System.Deployment.Application.ApplicationDeployment.IsNetworkDeployed)
+            //{
+            //    System.Deployment.Application.ApplicationDeployment ad = System.Deployment.Application.ApplicationDeployment.CurrentDeployment;
+            //    return "Version: " + ad.CurrentVersion.ToString();
+            //}
 
-            return "v1.0";    
+            return "v2.0";
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -78,7 +80,7 @@ namespace NIEMXML
 
                     //Get Documentation
                     if (documentation.Count() == 1)
-                        description =  documentation[0].Value;
+                        description = documentation[0].Value;
 
                     //Get Source
                     if (documentation.Count() == 2)
@@ -104,7 +106,7 @@ namespace NIEMXML
 
         public class documentationEntryException : Exception
         {
-            public documentationEntryException(string message)  : base(message) { }
+            public documentationEntryException(string message) : base(message) { }
         }
 
         private void selectXSD_Click(object sender, EventArgs e)
@@ -122,8 +124,8 @@ namespace NIEMXML
                 {
                     string text = File.ReadAllText(file);
                     createExcel.Enabled = true;
-                    label1.Text = "Step 2: Click Convert To Excel button to begin."; 
-                
+                    label1.Text = "Step 2: Click Convert To Excel button to begin.";
+
                 }
                 catch (IOException)
                 {
@@ -139,8 +141,6 @@ namespace NIEMXML
         private void createExcel_Click(object sender, EventArgs e)
         {
             progressBar1.Value = 0;
-           // progressBar1.Style = ProgressBarStyle.Marquee;
-           // progressBar1.MarqueeAnimationSpeed = 30;
             progressBar1.Step = 1;
             label3.Text = "0%";
 
@@ -156,50 +156,56 @@ namespace NIEMXML
         {
             try
             {
-            jobCanceled = false;
-            errorMsg = "";
-            CreateExcelDoc excell_app = new CreateExcelDoc();
-            doc = XDocument.Load(openFileDialog1.FileName);
+                jobCanceled = false;
+                errorMsg = "";
+                wb = new XLWorkbook();
+                var ws = wb.Worksheets.Add("NIEM");
+                doc = XDocument.Load(openFileDialog1.FileName);
 
-            //creates the main header
-            excell_app.createHeaders(2, 1, openFileDialog1.FileName, "A2", "D2", 2, "YELLOW", true, 10, "n");
-            //creates subheaders
-            excell_app.createHeaders(1, 1, "Class Name (Extension Class)", "A1", "A1", 0, "GRAY", true, 10, "");
-            excell_app.createHeaders(1, 2, "Element Name", "B1", "B1", 0, "GRAY", true, 10, "");
-            excell_app.createHeaders(1, 3, "Element Type", "C1", "C1", 0, "GRAY", true, 10, "");
-            excell_app.createHeaders(1, 4, "Documentation ", "D1", "D1", 0, "GRAY", true, 10, "");
-            excell_app.createHeaders(1, 5, "Source ", "E1", "E1", 0, "GRAY", true, 10, "");
+                //creates the main header
+                ws.Cell("A2").Value = openFileDialog1.FileName;
+                ws.Range("A2:D2").Merge().Style.Fill.BackgroundColor = XLColor.Khaki;
 
-            //Row Start
-            int row = 3;
-            string documentation = "";
+                //creates subheaders
+                ws.Cell("A1").Value = "Class Name (Extension Class)";
+                ws.Cell("B1").Value = "(namespace:) Element Name";
+                ws.Cell("C1").Value = "(namespace:) Element Type";
+                ws.Cell("D1").Value = "Documentation ";
+                ws.Cell("E1").Value = "Source ";
+                ws.Range("A1:E1").Style.Font.Bold = true;
+                ws.Range("A1:E1").Style.Fill.BackgroundColor = XLColor.LightBlue;
+                ws.Range("A1:E1").Style.Font.FontSize = 16;           
+                ws.SheetView.FreezeRows(1);
 
-            int complex = doc.Descendants(xs + "complexType").Count();
-            int simple = doc.Descendants(xs + "simpleType").Count();
-            int elements = doc.Root.Elements(xs + "element").Count();
-            int total = complex + simple + elements;
-            decimal percentage = 100 / total;
+                //Row Start
+                int row = 3;
+                string documentation = "";
 
-
+                int complex = doc.Descendants(xs + "complexType").Count();
+                int simple = doc.Descendants(xs + "simpleType").Count();
+                int elements = doc.Root.Elements(xs + "element").Count();
+                int total = complex + simple + elements;
+                decimal percentage = 100 / total;
 
                 //complexType Process
                 foreach (var el in doc.Descendants(xs + "complexType"))
                 {
+                    ws.Range("A" + row + ":E" + row).Style.Fill.BackgroundColor = XLColor.LightBlue;
                     backgroundWorker1.ReportProgress(total, total);
-                    if (cancelJob(e)) break; 
-                  
+                    if (cancelJob(e)) break;
+
                     //Write Class Name
                     if ((el.Elements(xs + "complexContent")).Count() != 0)
-                     extensionClass = el.Elements(xs + "complexContent").Elements(xs + "extension").Single().Attribute("base").Value;
+                        extensionClass = el.Elements(xs + "complexContent").Elements(xs + "extension").Single().Attribute("base").Value;
 
-                    excell_app.addData(row, 1, el.Attribute("name").Value + " (" + extensionClass + ")", "A" + row, "A" + row, "");
+                        ws.Cell("A" + row).Value = el.Attribute("name").Value + " (" + extensionClass + ")";
+                        ws.Cell("A" + row).Style.Font.Bold = true;
 
                     //Check if Documentation exists for Class
                     if (el.Elements(xs + "annotation").Elements(xs + "documentation").Count() != 0)
                     {
                         documentation = el.Elements(xs + "annotation").Elements(xs + "documentation").Single().Value;
-                        //Write Documentation for Class
-                        excell_app.addData(row, 4, documentation, "D" + row, "D" + row, "");
+                        ws.Cell("D" + row).Value = documentation;
                     }
 
                     row++;
@@ -208,47 +214,46 @@ namespace NIEMXML
                     {
                         if (cancelJob(e)) break;
 
-                        writeElement(attr, row, excell_app, backgroundWorker1, total);                                         
+                        writeElement(attr, row, ws, backgroundWorker1, total);                                         
                         row++;
-                    }
-                    excell_app.createHeaders(row, 2, "", "A" + row, "D" + row, 2, "GAINSBORO", true, 10, "");
+                    }                
                     row++;
                 }
 
                 //simpleType Process
                 foreach (var el in doc.Descendants(xs + "simpleType"))
                 {
+                    ws.Range("A" + row + ":E" + row).Style.Fill.BackgroundColor = XLColor.LightBlue;
                     backgroundWorker1.ReportProgress(total, total);
-                    if (cancelJob(e)) break; 
+                    if (cancelJob(e)) break;
 
                     //Write simpleType name
-                    excell_app.addData(row, 1, el.Attribute("name").Value + " (Enumerable)", "A" + row, "A" + row, "");
+                    ws.Cell("A" + row).Value = el.Attribute("name").Value + " (Enumerable)";
+                    ws.Cell("A" + row).Style.Font.Bold = true;
 
                     //Check if Documentation exists for simpleType
                     if (el.Elements(xs + "annotation").Elements(xs + "documentation").Count() != 0)
                     {
                         documentation = el.Elements(xs + "annotation").Elements(xs + "documentation").Single().Value;
-                        //Write Documentation for simpleType
-                        excell_app.addData(row, 4, documentation, "D" + row, "D" + row, "");
+                        ws.Cell("D" + row).Value = documentation;
                     }
                     row++;
 
                     foreach (var attr in el.Elements(xs + "restriction").Elements(xs + "enumeration"))
-                     {
-                          var edocu = "";
-                          if (attr.Elements(xs + "annotation").Elements(xs + "documentation").Count() != 0)
-                              edocu = attr.Elements(xs + "annotation").Elements(xs + "documentation").Single().Value;
+                    {
+                        var edocu = "";
+                        if (attr.Elements(xs + "annotation").Elements(xs + "documentation").Count() != 0)
+                            edocu = attr.Elements(xs + "annotation").Elements(xs + "documentation").Single().Value;
 
                         var ename = attr.Attribute("value").Value;
-
-                        excell_app.addData(row, 2, ename, "B" + row, "B" + row, "");
-                        excell_app.addData(row, 3, "enumeration", "C" + row, "C" + row, "");
-                        excell_app.addData(row, 4, edocu, "D" + row, "D" + row, "");
+                        ws.Cell("B" + row).Value = ename;
+                        ws.Cell("C" + row).Value = "enumeration";
+                        ws.Cell("D" + row).Value = edocu;
                         row++;
-                     }
-                    excell_app.createHeaders(row, 2, "", "A" + row, "D" + row, 2, "GAINSBORO", true, 10, "");
+                    }
                     row++;
                 }
+                ws.Columns().AdjustToContents();
             }
 
             catch (documentationEntryException ex)
@@ -259,11 +264,11 @@ namespace NIEMXML
             {
                 errorMsg = "You probably clicked on Excel or Closed it. Therefore the operation will now terminate.\nPlease restart the conversion.";
             }
-            catch(Exception ex) 
+            catch (Exception ex)
             {
-               errorMsg = ex.ToString();
+                errorMsg = ex.ToString();
             }
-          
+
         }
 
         public bool cancelJob(DoWorkEventArgs e)
@@ -273,39 +278,46 @@ namespace NIEMXML
                 e.Cancel = true;
                 return true;
             }
-                return false;
+            return false;
         }
 
-        public void writeElement(XElement attr, int row, CreateExcelDoc excell_app, BackgroundWorker backgroundWorker1, int total)
+        public void writeElement(XElement attr, int row, IXLWorksheet ws, BackgroundWorker backgroundWorker1, int total)
         {
             //Element Name
             elementName = attr.Attribute("ref") != null ? attr.Attribute("ref").Value : "";
-            excell_app.addData(row, 2, elementName, "B" + row, "B" + row, "");
+            ws.Cell("B" + row).Value = elementName;
 
             //Element Type
             elementName = elementName.Substring(elementName.IndexOf(":") + 1);
             string elementType = searchForElementTypes(elementName, doc, xs, backgroundWorker1, total);
-            excell_app.addData(row, 3, elementType, "C" + row, "C" + row, "");
+            ws.Cell("C" + row).Value = elementType;
 
             //Element Documentation/Source
             var tuple = searchForElementDocumentation(elementName, doc, xs);
-            excell_app.addData(row, 4, tuple.Item1, "D" + row, "D" + row, "");
-            excell_app.addData(row, 5, tuple.Item2, "E" + row, "E" + row, "");    
+            ws.Cell("D" + row).Value = tuple.Item1;
+            ws.Cell("E" + row).Value = tuple.Item2;
         }
 
         private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             // The progress percentage is a property of e
             progressBar1.Maximum = Convert.ToInt32(e.UserState);
-
             progressBar1.Increment(1);
-
-
             label3.Text = (progressBar1.Value * 100) / progressBar1.Maximum + "%";
         }
 
         private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
+            progressBar1.Maximum = 1;
+            try
+            {
+                wb.SaveAs("BasicTable.xlsx");
+            }
+            catch (Exception ex)
+            {
+                errorMsg = "Unable to save. Please close Excel Sheet. \n " + ex.Message;
+            }
+     
             label3.Text = "100%";
             createExcel.Enabled = true;
             selectXSD.Enabled = true;
@@ -321,7 +333,7 @@ namespace NIEMXML
             {
                 if (!jobCanceled)
                 {
-                    MessageBox.Show(new Form() { TopMost = true },  "Done!", "Operation Succesfull", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                    MessageBox.Show(new Form() { TopMost = true }, "Done!", "Operation Succesfull", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
                     label1.Text = "Done!";
                 }
                 else
