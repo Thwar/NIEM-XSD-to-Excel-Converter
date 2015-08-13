@@ -148,6 +148,7 @@ namespace NIEMXML
            // progressBar1.Style = ProgressBarStyle.Marquee;
            // progressBar1.MarqueeAnimationSpeed = 30;
             progressBar1.Step = 1;
+            label3.Text = "0%";
 
             createExcel.Enabled = false;
             selectXSD.Enabled = false;
@@ -307,8 +308,8 @@ namespace NIEMXML
 
         private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-        
-            progressBar1.Style = ProgressBarStyle.Continuous;
+            progressBar1.Value = 100;
+            label3.Text = "100%";
             createExcel.Enabled = true;
             selectXSD.Enabled = true;
             label2.Text = "";
