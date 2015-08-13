@@ -6,7 +6,10 @@ Build using Windows Forms in C#. This tool is used to generate Excel Spreadsheet
 
 It currently organized the schema contents into excel columns :
 Class Name (Extension Class)
+
 Element Name	
+
 Element Type
+
 Documentation
 
