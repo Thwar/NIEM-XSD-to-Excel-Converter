@@ -135,7 +135,7 @@ namespace NIEMXML
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("This tool is used to convert NIEM XSD schemas into Excel Spreadsheets. \n\nAuthor: Ruben T. Rosales\nVersion " + GetRunningVersion(), "About NIEM XSD to Excel Converter ", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+            MessageBox.Show("This tool is used to convert NIEM XSD schemas into Excel Spreadsheets. \n\nAuthor: Ruben T. Rosales\nRuben.Rosales@acf.hhs.gov\n\nClick Help button for GitHub repository. \nVersion: " + GetRunningVersion(), "About NIEM XSD to Excel Converter ", MessageBoxButtons.OK, MessageBoxIcon.Asterisk, MessageBoxDefaultButton.Button1, 0, "https://github.com/Thwar/NIEM-XSD-to-Excel-Converter", "");
         }
 
         private void createExcel_Click(object sender, EventArgs e)
@@ -266,7 +266,7 @@ namespace NIEMXML
             }
             catch (Exception ex)
             {
-                errorMsg = ex.ToString();
+                errorMsg = "The schema MAY be invalid. Please check the schema for conformance. If nothing is wrong, this may be a bug, please contact the developer." + ex.ToString();
             }
 
         }
