@@ -1,5 +1,16 @@
 # NIEM-XSD-to-Excel-Converter
 
-This tool is used to convert NIEM XSD schemas into Excel Spreadsheets.
+Version v2.0 by Thomas Rosales
 
-It currently organized the schema contents into Class Name (Extension Class),	Element Name,	Element Type,	Documentation and Sources columns in Excel.
+Build using Windows Forms in C#. This tool is used to generate Excel Spreadsheets from NIEM (XSD) schemas. Compactible with extension, exchange, subset and codelist schemas.
+
+It currently organized the schema contents into excel columns :
+
+Class Name (Extension Class)
+
+Element Name	
+
+Element Type
+
+Documentation
+
