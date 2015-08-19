@@ -169,6 +169,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="App\NIEMXML.exe" />
     <Content Include="PerfCenterCpl.ico" />
     <EmbeddedResource Include="ClosedXML.dll" />
     <EmbeddedResource Include="DocumentFormat.OpenXml.dll" />
