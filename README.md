@@ -22,7 +22,7 @@ It currently organized the schema contents into excel columns :
 
 #####Latest changes:
 
-- Embeded dll for portability
+- Embeded DLLs for portability.
 - Faster processing. No longer requires Excel.
 - Better error catching.
 
