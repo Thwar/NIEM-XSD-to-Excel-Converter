@@ -26,3 +26,5 @@ It currently organized the schema contents into excel columns :
 - Faster processing. No longer requires Excel.
 - Better error catching.
 
+#####Download Link:
+- https://github.com/Thwar/NIEM-XSD-to-Excel-Converter/blob/master/NIEMXML/App/NIEMXML.exe?raw=true
