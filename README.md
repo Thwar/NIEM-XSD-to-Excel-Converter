@@ -6,11 +6,23 @@ Build using Windows Forms in C#. This tool is used to generate Excel Spreadsheet
 
 It currently organized the schema contents into excel columns :
 
-Class Name (Extension Class)
+- Class Name (Extension Class)
+- Element Name	
+- Element Type
+- Documentation
+- Source
 
-Element Name	
+#####Instructions:
+- Run exe (no installation required)
+- Press "Select NIEM XSD" button and choose NIEM schema file 
+- Press "Convert To Excel" button.
+- Wait for operation to finish (should be quick)
+- Output file should appear in same directory as exe tool. 
+- The tool outfile will be named "BasicTable.xlsx".
 
-Element Type
+#####Latest changes:
 
-Documentation
+- Embeded DLLs for portability.
+- Faster processing. No longer requires Excel.
+- Better error catching.
 
