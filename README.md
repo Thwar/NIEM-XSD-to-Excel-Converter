@@ -2,24 +2,29 @@
 
 Version v2.0 by Thomas Rosales
 
-Latest changes:
+#####Instructions:
+- Run exe 
+- Press "Select NIEM XSD" button and choose NIEM schema file 
+- Press "Convert To Excel" button.
+- Wait for operation to finish (should be quick)
+- Output file should appear in same directory as exe tool. 
+- The tool outfile will be named "BasicTable.xlsx".
 
--Embeded dll for portability
+#####Latest changes:
 
--Faster processing. No longer requires Excel.
-
--Better error catching.
+- Embeded dll for portability
+- Faster processing. No longer requires Excel.
+- Better error catching.
 
 
 Build using Windows Forms in C#. This tool is used to generate Excel Spreadsheets from NIEM (XSD) schemas. Compactible with extension, exchange, subset and codelist schemas.
 
 It currently organized the schema contents into excel columns :
 
-Class Name (Extension Class)
+- Class Name (Extension Class)
+- Element Name	
+- Element Type
+- Documentation
+- Source
 
-Element Name	
-
-Element Type
-
-Documentation
 
