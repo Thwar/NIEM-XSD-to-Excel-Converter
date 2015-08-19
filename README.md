@@ -13,7 +13,7 @@ It currently organized the schema contents into excel columns :
 - Source
 
 #####Instructions:
-- Run exe 
+- Run exe (no installation required)
 - Press "Select NIEM XSD" button and choose NIEM schema file 
 - Press "Convert To Excel" button.
 - Wait for operation to finish (should be quick)
