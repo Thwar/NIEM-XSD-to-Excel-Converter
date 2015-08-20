@@ -9,8 +9,23 @@ It currently organized the schema contents into excel columns :
 - Class Name (Extension Class)
 - Element Name	
 - Element Type
-- Documentation
-- Source
+- Documentation***
+- Source(opcional)***
+
+
+#####***Schema Design:
+-In order for the tool to capture the Documentation and Source correctly, an element should have a separate documentation tag for Documentation and another one for Source. **Important!**: The source documentation must start with **"Source:"** 
+
+Example:
+
+```
+  <xsd:element abstract="false" name="ProgramType" nillable="false" type="niem-xsd:string">
+    <xsd:annotation>
+      <xsd:documentation>Source: North Dakota</xsd:documentation>
+      <xsd:documentation>Referral Type	Indicator of what system is sending this referral to STARS</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+```
 
 #####Instructions:
 - Run exe (no installation required)
@@ -26,3 +41,8 @@ It currently organized the schema contents into excel columns :
 - Faster processing. No longer requires Excel.
 - Better error catching.
 
+#####Disclamer:
+- This tool should be taken lightly. Once the spreadsheet is generated, it needs to be reviewed manually to make sure all elements were included. The tool does its best to capture everything inside the schema. One example: the tool will only capture elements with the attribute ref and not the name attribute when inside the complexType.  
+
+#####Download Link:
+- https://github.com/Thwar/NIEM-XSD-to-Excel-Converter/blob/master/NIEMXML/App/NIEMXML.exe?raw=true
