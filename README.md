@@ -1,6 +1,7 @@
 # NIEM-XSD-to-Excel-Converter
 
-Lastest version as of 8/20/2015 v2.2 
+Lastest version v2.2
+as of 8/20/2015 
 
 Author: Thomas Rosales
 
