@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Deployment.Application;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -30,6 +31,8 @@ namespace NIEMXML
         XLWorkbook wb = new XLWorkbook();
         bool jobCanceled = false;
         string errorMsg;
+        string outputPath;
+        string filename;
 
         private string GetRunningVersion()
         {
@@ -39,7 +42,7 @@ namespace NIEMXML
             //    return "Version: " + ad.CurrentVersion.ToString();
             //}
 
-            return "v2.0";
+            return "v2.2";
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -71,7 +74,7 @@ namespace NIEMXML
             {
                 if (el.Attribute("name").Value == elementName)
                 {
-                    //Check if Documentation exists for Class
+                    //Check if Documentation exists for Element
                     var documentation = el.Elements(xs + "annotation").Elements(xs + "documentation").ToList();
 
                     //Check if more than one Documentation entry exists and throw error
@@ -80,7 +83,10 @@ namespace NIEMXML
 
                     //Get Documentation
                     if (documentation.Count() == 1)
-                        description = documentation[0].Value;
+                    {
+                        source = documentation[0].Value.StartsWith("Source:") ? documentation[0].Value : "";
+                        description = documentation[0].Value.StartsWith("Source:") ? "" : documentation[0].Value;
+                    }
 
                     //Get Source
                     if (documentation.Count() == 2)
@@ -92,6 +98,30 @@ namespace NIEMXML
                 }
             }
             return new Tuple<string, string>(description, source);
+        }
+
+
+        private void writeClassDocumentation(XElement el, IXLWorksheet ws, int row)
+        {
+            //Check if Documentation exists for Class
+            var classDocumentation = el.Elements(xs + "annotation").Elements(xs + "documentation").ToList();
+
+            //Check if more than one Documentation entry exists and throw error
+            if (classDocumentation.Count() > 2)
+                throw new documentationEntryException(el.Attribute("name").Value);
+
+            if (classDocumentation.Count() == 1)
+            {
+                ws.Cell("E" + row).Value = classDocumentation[0].Value.StartsWith("Source:") ? classDocumentation[0].Value : "";
+                ws.Cell("D" + row).Value = classDocumentation[0].Value.StartsWith("Source:") ? "" : classDocumentation[0].Value;
+            }
+
+            if (classDocumentation.Count() == 2)
+            {
+                ws.Cell("E" + row).Value = classDocumentation[0].Value.StartsWith("Source:") ? classDocumentation[0].Value : classDocumentation[1].Value;
+                ws.Cell("D" + row).Value = classDocumentation[0].Value.StartsWith("Source:") ? classDocumentation[1].Value : classDocumentation[0].Value;
+            }
+
         }
 
         private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
@@ -118,6 +148,9 @@ namespace NIEMXML
             if (result == DialogResult.OK) // Test result.
             {
                 string file = openFileDialog1.FileName;
+                outputPath = Path.GetDirectoryName(file);
+                filename = Path.GetFileNameWithoutExtension(file);
+
                 textBox1.Text = file;
 
                 try
@@ -164,7 +197,12 @@ namespace NIEMXML
 
                 //creates the main header
                 ws.Cell("A2").Value = openFileDialog1.FileName;
-                ws.Range("A2:D2").Merge().Style.Fill.BackgroundColor = XLColor.Khaki;
+                ws.Range("A2:E2").Merge().Style.Fill.BackgroundColor = XLColor.Khaki;
+                if (doc.Root.Elements(xs + "annotation") != null)
+                    if (doc.Root.Elements(xs + "annotation").Elements(xs + "documentation").Count() > 0)
+                        ws.Cell("A3").Value = doc.Root.Elements(xs + "annotation").Elements(xs + "documentation").Single().Value;
+
+                ws.Range("A3:E3").Merge().Style.Fill.BackgroundColor = XLColor.Khaki;
 
                 //creates subheaders
                 ws.Cell("A1").Value = "Class Name (Extension Class)";
@@ -174,13 +212,11 @@ namespace NIEMXML
                 ws.Cell("E1").Value = "Source ";
                 ws.Range("A1:E1").Style.Font.Bold = true;
                 ws.Range("A1:E1").Style.Fill.BackgroundColor = XLColor.LightBlue;
-                ws.Range("A1:E1").Style.Font.FontSize = 16;           
+                ws.Range("A1:E1").Style.Font.FontSize = 16;
                 ws.SheetView.FreezeRows(1);
 
                 //Row Start
-                int row = 3;
-                string documentation = "";
-
+                int row = 4;
                 int complex = doc.Descendants(xs + "complexType").Count();
                 int simple = doc.Descendants(xs + "simpleType").Count();
                 int elements = doc.Root.Elements(xs + "element").Count();
@@ -196,27 +232,38 @@ namespace NIEMXML
 
                     //Write Class Name
                     if ((el.Elements(xs + "complexContent")).Count() != 0)
-                        extensionClass = el.Elements(xs + "complexContent").Elements(xs + "extension").Single().Attribute("base").Value;
+                        if (el.Elements(xs + "complexContent").Elements(xs + "extension").Count() != 0)
+                            extensionClass = el.Elements(xs + "complexContent").Elements(xs + "extension").Single().Attribute("base").Value;
 
-                        ws.Cell("A" + row).Value = el.Attribute("name").Value + " (" + extensionClass + ")";
-                        ws.Cell("A" + row).Style.Font.Bold = true;
+                    if (el.Elements(xs + "complexContent").Elements(xs + "restriction").Count() != 0)
+                        extensionClass = el.Elements(xs + "complexContent").Elements(xs + "restriction").Single().Attribute("base").Value;
 
-                    //Check if Documentation exists for Class
-                    if (el.Elements(xs + "annotation").Elements(xs + "documentation").Count() != 0)
-                    {
-                        documentation = el.Elements(xs + "annotation").Elements(xs + "documentation").Single().Value;
-                        ws.Cell("D" + row).Value = documentation;
-                    }
+                    ws.Cell("A" + row).Value = el.Attribute("name").Value + " (" + extensionClass + ")";
+                    ws.Cell("A" + row).Style.Font.Bold = true;
+                    extensionClass = "";
+
+                    writeClassDocumentation(el, ws, row);
+
 
                     row++;
 
+                    //extension tag
                     foreach (var attr in el.Elements(xs + "complexContent").Elements(xs + "extension").Elements(xs + "sequence").Elements(xs + "element"))
                     {
                         if (cancelJob(e)) break;
 
-                        writeElement(attr, row, ws, backgroundWorker1, total);                                         
+                        writeElement(attr, row, ws, backgroundWorker1, total);
                         row++;
-                    }                
+                    }
+
+                    //restriction tag
+                    foreach (var attr in el.Elements(xs + "complexContent").Elements(xs + "restriction").Elements(xs + "sequence").Elements(xs + "element"))
+                    {
+                        if (cancelJob(e)) break;
+
+                        writeElement(attr, row, ws, backgroundWorker1, total);
+                        row++;
+                    }
                     row++;
                 }
 
@@ -231,12 +278,8 @@ namespace NIEMXML
                     ws.Cell("A" + row).Value = el.Attribute("name").Value + " (Enumerable)";
                     ws.Cell("A" + row).Style.Font.Bold = true;
 
-                    //Check if Documentation exists for simpleType
-                    if (el.Elements(xs + "annotation").Elements(xs + "documentation").Count() != 0)
-                    {
-                        documentation = el.Elements(xs + "annotation").Elements(xs + "documentation").Single().Value;
-                        ws.Cell("D" + row).Value = documentation;
-                    }
+                    writeClassDocumentation(el, ws, row);
+
                     row++;
 
                     foreach (var attr in el.Elements(xs + "restriction").Elements(xs + "enumeration"))
@@ -284,7 +327,22 @@ namespace NIEMXML
         public void writeElement(XElement attr, int row, IXLWorksheet ws, BackgroundWorker backgroundWorker1, int total)
         {
             //Element Name
-            elementName = attr.Attribute("ref") != null ? attr.Attribute("ref").Value : "";
+            if (attr.Attribute("ref") != null)
+            {
+                elementName = attr.Attribute("ref").Value;
+            }
+            else if (attr.Attribute("name") != null)
+            {
+                elementName = attr.Attribute("name").Value;
+            }
+            else
+            {
+                elementName = "";
+            }
+
+            // elementName = attr.Attribute("ref") != null ? attr.Attribute("ref").Value : "";
+            // elementName = attr.Attribute("name") != null ? attr.Attribute("name").Value : ;
+
             ws.Cell("B" + row).Value = elementName;
 
             //Element Type
@@ -309,15 +367,19 @@ namespace NIEMXML
         private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             progressBar1.Maximum = 1;
+            var outputFilePath = "";
             try
             {
-                wb.SaveAs("BasicTable.xlsx");
+                outputFilePath = outputPath + "\\" + filename + ".xlsx";
+                wb.SaveAs(outputFilePath);
+
+             
             }
             catch (Exception ex)
             {
                 errorMsg = "Unable to save. Please close Excel Sheet. \n " + ex.Message;
             }
-     
+
             label3.Text = "100%";
             createExcel.Enabled = true;
             selectXSD.Enabled = true;
@@ -333,8 +395,9 @@ namespace NIEMXML
             {
                 if (!jobCanceled)
                 {
-                    MessageBox.Show(new Form() { TopMost = true }, "Done!", "Operation Succesfull", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
-                    label1.Text = "Done!";
+                    MessageBox.Show(new Form() { TopMost = true }, "Done! \nThe spreadsheet is located at: \n" + outputFilePath, "Operation Succesfull", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                    label1.Text = "Done";
+                    Process.Start(@"" + outputPath);
                 }
                 else
                 {
