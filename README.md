@@ -36,8 +36,7 @@ Example:
 - Press "Select NIEM XSD" button and choose NIEM schema file 
 - Press "Convert To Excel" button.
 - Wait for operation to finish (should be quick)
-- Output file should appear in same directory as exe tool. 
-- The tool outfile will be named "BasicTable.xlsx".
+- Once done the spreadsheet will appear in the same directory as the schema selected.
 
 
 #####Disclamer:
