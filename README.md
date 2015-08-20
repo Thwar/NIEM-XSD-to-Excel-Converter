@@ -45,3 +45,22 @@ Example:
 
 #####Download Link:
 - https://github.com/Thwar/NIEM-XSD-to-Excel-Converter/blob/master/NIEMXML/App/NIEMXML.exe?raw=true
+
+#####Changes:
+#####v2.2
+- Fixed no sequence errors
+- Modified file output process and message box
+- Tool now captures name and ref element attributes
+- Fixed cosmetic spreadsheet background color
+- Added schema definition
+- Source is now allowed without having description field.
+- Class now supports source definitions. 
+
+
+#####v2.0
+- Embeded DLLs for portability.
+- Faster processing. No longer requires Excel.
+- Better error catching.
+- Spreadsheet redesign
+- Added Source column
+
