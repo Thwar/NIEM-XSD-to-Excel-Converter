@@ -31,7 +31,7 @@ Example:
   </xsd:element>
 ```
 
-#####Instructions:
+####Instructions:
 - Run exe (no installation required)
 - Press "Select NIEM XSD" button and choose NIEM schema file 
 - Press "Convert To Excel" button.
@@ -39,14 +39,14 @@ Example:
 - Once done the spreadsheet will appear in the same directory as the schema selected.
 
 
-#####Disclamer:
+####Disclamer:
 - This tool should be taken lightly. Once the spreadsheet is generated, it needs to be reviewed manually to make sure all elements were included. The tool does its best to capture everything inside the schema. 
 
 
-#####Download Link:
+####Download Link:
 - https://github.com/Thwar/NIEM-XSD-to-Excel-Converter/blob/master/NIEMXML/App/NIEMXML.exe?raw=true
 
-#####Changes:
+####Changes:
 #####v2.2
 - Fixed no sequence errors
 - Modified file output process and message box
