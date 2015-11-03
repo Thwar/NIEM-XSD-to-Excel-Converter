@@ -13,12 +13,14 @@ It currently organized the schema contents into excel columns :
 - Class Name (Extension Class)
 - Element Name	
 - Element Type
-- Documentation***
-- Source(opcional)***
+- Documentation*
+- Source(opcional)*
 
 
-#####***Schema Design:
--In order for the tool to capture the Documentation and Source correctly, an element should have a separate documentation tag for Documentation and another one for Source. **Important!**: The source documentation must start with **"Source:"** 
+#####*Schema Design:
+-In order for the tool to capture the Documentation and Source correctly, an element should have a separate documentation tag for Documentation and another one for Source. 
+
+**Important!**: The source documentation must start with **"Source:"** (case sensitive)
 
 Example:
 
