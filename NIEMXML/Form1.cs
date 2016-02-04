@@ -42,7 +42,7 @@ namespace NIEMXML
             //    return "Version: " + ad.CurrentVersion.ToString();
             //}
 
-            return "v2.2";
+            return "v2.3";
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -230,15 +230,19 @@ namespace NIEMXML
                     backgroundWorker1.ReportProgress(total, total);
                     if (cancelJob(e)) break;
 
-                    //Write Class Name
-                    if ((el.Elements(xs + "complexContent")).Count() != 0)
-                        if (el.Elements(xs + "complexContent").Elements(xs + "extension").Count() != 0)
+                    //Get extension class
+                  //  if ((el.Elements(xs + "complexContent")).Count() != 0) not needed maybe
+                    if (el.Elements(xs + "complexContent").Elements(xs + "extension").Count() != 0)
                             extensionClass = el.Elements(xs + "complexContent").Elements(xs + "extension").Single().Attribute("base").Value;
 
                     if (el.Elements(xs + "complexContent").Elements(xs + "restriction").Count() != 0)
                         extensionClass = el.Elements(xs + "complexContent").Elements(xs + "restriction").Single().Attribute("base").Value;
 
-                    ws.Cell("A" + row).Value = el.Attribute("name").Value + " (" + extensionClass + ")";
+                    if (el.Elements(xs + "simpleContent").Elements(xs + "extension").Count() != 0)
+                        extensionClass = el.Elements(xs + "simpleContent").Elements(xs + "extension").Single().Attribute("base").Value;
+
+
+                    ws.Cell("A" + row).Value = el.Attribute("name").Value + " (" + extensionClass + ")"; // write class name and extension class
                     ws.Cell("A" + row).Style.Font.Bold = true;
                     extensionClass = "";
 
@@ -247,7 +251,7 @@ namespace NIEMXML
 
                     row++;
 
-                    //extension tag
+                    //write attributes from extension tag
                     foreach (var attr in el.Elements(xs + "complexContent").Elements(xs + "extension").Elements(xs + "sequence").Elements(xs + "element"))
                     {
                         if (cancelJob(e)) break;
@@ -256,7 +260,7 @@ namespace NIEMXML
                         row++;
                     }
 
-                    //restriction tag
+                    //write attributes from restriction tag
                     foreach (var attr in el.Elements(xs + "complexContent").Elements(xs + "restriction").Elements(xs + "sequence").Elements(xs + "element"))
                     {
                         if (cancelJob(e)) break;
@@ -285,6 +289,10 @@ namespace NIEMXML
                     foreach (var attr in el.Elements(xs + "restriction").Elements(xs + "enumeration"))
                     {
                         var edocu = "";
+
+                        writeClassDocumentation(attr, ws, row);
+
+                        //Documentation Enumerable
                         if (attr.Elements(xs + "annotation").Elements(xs + "documentation").Count() != 0)
                             edocu = attr.Elements(xs + "annotation").Elements(xs + "documentation").Single().Value;
 
