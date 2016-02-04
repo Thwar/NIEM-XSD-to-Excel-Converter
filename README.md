@@ -1,8 +1,8 @@
 # NIEM-XSD-to-Excel-Converter
 
-Lastest version v2.2
+Lastest version v2.3
 
-as of 8/20/2015 
+as of 2/04/2016 
 
 Author: Thomas Rosales
 
@@ -49,6 +49,10 @@ Example:
 - https://github.com/Thwar/NIEM-XSD-to-Excel-Converter/blob/master/NIEMXML/App/NIEMXML.exe?raw=true
 
 ####Changes:
+
+#####v2.3
+- Extension class now shows for simpleContent tags inside complexContent classes.
+
 #####v2.2
 - Fixed no sequence errors
 - Modified file output process and message box
