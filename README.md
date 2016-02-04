@@ -51,7 +51,7 @@ Example:
 ####Changes:
 
 #####v2.3
--Extension class now shows for simpleContent tags inside complexContent classes.
+- Extension class now shows for simpleContent tags inside complexContent classes.
 
 #####v2.2
 - Fixed no sequence errors
